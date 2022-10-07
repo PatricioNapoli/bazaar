@@ -40,12 +40,12 @@ func (wd *Watchdog) Start(broker chan string) {
 				break
 			}
 		default:
-			wd.RefreshReserves(broker)
+			wd.RefreshRates(broker)
 		}
 	}
 }
 
-func (wd *Watchdog) RefreshReserves(broker chan string) {
+func (wd *Watchdog) RefreshRates(broker chan string) {
 	log.Println("refreshing pairs reserves data")
 
 	address := common.HexToAddress("0x416355755f32b2710ce38725ed0fa102ce7d07e6")
@@ -59,9 +59,13 @@ func (wd *Watchdog) RefreshReserves(broker chan string) {
 		log.Fatal(err)
 	}
 
-	for i := 0; i < len(reserves); i = +2 {
-		wd.Swaps[i].Token0.Reserve = *reserves[i]
-		wd.Swaps[i].Token0.Reserve = *reserves[i+1]
+	for i := 0; i < len(wd.Swaps); i++ {
+		wd.Swaps[i].Token0.Reserve = *reserves[i*2]
+		wd.Swaps[i].Token1.Reserve = *reserves[i*2+1]
+
+		/*		rt := *new(big.Int).Div(&wd.Swaps[i].Token1.Reserve, &wd.Swaps[i].Token0.Reserve)
+
+				wd.Swaps[i].Rate = *new(big.Int).Div(&wd.Swaps[i].Token1.Reserve, &wd.Swaps[i].Token0.Reserve)*/
 	}
 
 	broker <- "refresh"

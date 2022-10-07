@@ -8,9 +8,11 @@ import (
 )
 
 type Swap struct {
-	Address string
-	Token0  tokens.Token
-	Token1  tokens.Token
+	Address  string
+	Token0   tokens.Token
+	Token1   tokens.Token
+	Rate0to1 int
+	Rate1to0 int
 }
 
 type TokenSwap struct {
