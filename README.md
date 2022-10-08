@@ -37,8 +37,12 @@ Infura API Key
 
 ## Environment
 
-`export INFURA_KEY=YOURKEY` (required)  
-`export WETH=1` (default)
+`make env`  
+
+For getting a prompt for the INFURA key.  
+Alternatively, you may export manually:
+
+`export INFURA_KEY=YOURKEY`
 
 ## Build & Run
 

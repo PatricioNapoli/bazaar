@@ -3,7 +3,6 @@ package tokens
 import (
 	"github.com/PatricioNapoli/bazaar/pkg/utils"
 	"log"
-	"math/big"
 )
 
 type Token struct {
@@ -11,7 +10,6 @@ type Token struct {
 	Symbol   string
 	Name     string
 	Decimals string
-	Reserve  big.Int
 }
 
 type Tokens struct {

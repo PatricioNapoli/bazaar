@@ -8,11 +8,14 @@ import (
 )
 
 type Swap struct {
-	Address  string
-	Token0   tokens.Token
-	Token1   tokens.Token
-	Rate0to1 int
-	Rate1to0 int
+	Address       string
+	Token0        tokens.Token
+	Token1        tokens.Token
+	Token0Reserve float64
+	Token1Reserve float64
+	Rate0to1      float64
+	Rate1to0      float64
+	HasReserves   bool
 }
 
 type TokenSwap struct {
@@ -60,14 +63,14 @@ func NewPaths(file string, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
 
 				var t0 tokens.Token
 				if i == 0 {
-					t0 = GetTokenFromPath(rootPathC[len(rootPathC)-1], tokenMap)
+					t0 = getTokenFromPath(rootPathC[len(rootPathC)-1], tokenMap)
 				} else {
-					t0 = GetTokenFromPath(rootPathC[i-1], tokenMap)
+					t0 = getTokenFromPath(rootPathC[i-1], tokenMap)
 				}
 
 				t1 := ts.Token
 
-				SetTokenOrder(&t0, &t1)
+				setTokenOrder(&t0, &t1)
 
 				swp := Swap{Address: swap.(string), Token0: t0, Token1: t1}
 
@@ -86,11 +89,11 @@ func NewPaths(file string, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
 	return paths, swaps
 }
 
-func GetTokenFromPath(t interface{}, tokenMap map[string]tokens.Token) tokens.Token {
+func getTokenFromPath(t interface{}, tokenMap map[string]tokens.Token) tokens.Token {
 	return tokenMap[t.([]interface{})[0].(string)]
 }
 
-func SetTokenOrder(t0 *tokens.Token, t1 *tokens.Token) {
+func setTokenOrder(t0 *tokens.Token, t1 *tokens.Token) {
 	tkns := []string{t0.Address, t1.Address}
 	sort.Strings(tkns)
 
