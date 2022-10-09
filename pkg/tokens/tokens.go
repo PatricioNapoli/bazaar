@@ -1,6 +1,7 @@
 package tokens
 
 import (
+	"github.com/PatricioNapoli/bazaar/pkg/config"
 	"github.com/PatricioNapoli/bazaar/pkg/utils"
 	"log"
 )
@@ -17,12 +18,12 @@ type Tokens struct {
 }
 
 // GetTokens loads a tokens file into an indexed map through token's address.
-func GetTokens(file string) map[string]Token {
-	log.Printf("loading token info in %s", file)
+func GetTokens(cfg config.Config) map[string]Token {
+	log.Printf("loading token info in %s", cfg.TokensFile)
 
-	f, err := utils.ReadFile(file)
+	f, err := utils.ReadFile(cfg.TokensFile)
 	if err != nil {
-		log.Panicf("failed when reading file %s - %v", file, err)
+		log.Panicf("failed when reading file %s - %v", cfg.TokensFile, err)
 	}
 
 	tokens := map[string]Token{}

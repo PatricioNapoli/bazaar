@@ -32,7 +32,7 @@ type Arbiter struct {
 
 // NewArbiter creates an arbitration node graph structure, that's capable of easily
 // traversing it and finding potential market arbitration paths.
-func NewArbiter(paths []pairs.Path, cfg config.Config, client chain.EthClient) Arbiter {
+func NewArbiter(cfg config.Config, client chain.EthClient, paths []pairs.Path) Arbiter {
 	// These are excluded because they do not belong to Uniswap or Sushiswap,
 	// furthermore, it appears that they have been disabled and reserves have not
 	// been rebalanced, leading to non-valid exchange rates, since they are not
@@ -92,10 +92,8 @@ func NewArbiter(paths []pairs.Path, cfg config.Config, client chain.EthClient) A
 	}
 }
 
-// Start initiates the node grap exploration and writes the output file.
+// Start initiates the node graph exploration and writes the output file.
 func (arb *Arbiter) Start() {
-	dexSwapGas := 150000.0
-
 	log.Println("searching possible arbitration paths")
 
 	gp, err := arb.Net.Client.SuggestGasPrice(context.Background())
@@ -104,7 +102,7 @@ func (arb *Arbiter) Start() {
 	}
 
 	gpgwei := utils.ReduceBigInt(gp, 9)
-	totalGas := gpgwei * dexSwapGas
+	totalGas := gpgwei * arb.Config.DexSwapGas
 
 	if arb.Config.IncludeFees {
 		log.Printf("current gas price in gwei: %f", totalGas)
@@ -114,10 +112,14 @@ func (arb *Arbiter) Start() {
 
 	millisBefore := utils.GetMillis()
 
-	balance := 1.0
-	highest := Arbitration{}
+	balance := arb.Config.InitialWETH
 	pathGroups := make([]Arbitration, 0)
+
+	// Splitting this operation in many go threads yielded bad results
+	// Threads benefit when the CPU computation of the unit surpasses
+	// that of the thread scheduling
 	for _, rn := range arb.RootNodes {
+
 		for _, node := range rn.Children {
 			currArbitration := Arbitration{
 				Balance: balance,
@@ -136,13 +138,10 @@ func (arb *Arbiter) Start() {
 
 				if a.Balance > balance {
 					pathGroups = append(pathGroups, a)
-
-					if a.Balance > highest.Balance {
-						highest = a
-					}
 				}
 			}
 		}
+
 	}
 
 	log.Printf("found %d routes for market making in %dms", len(pathGroups), utils.GetMillis()-millisBefore)
@@ -176,7 +175,7 @@ func (arb *Arbiter) exploreArbitrationGraph(arbitrations *[]Arbitration, currArb
 			continue
 		}
 
-		if i > 0 {
+		if i > 0 && n.Target.Address != arb.Config.WETHAddr {
 			newPath := currArb.Path[:len(currArb.Path)-1]
 			currArb = &Arbitration{
 				Balance: balanceBefore,

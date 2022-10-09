@@ -1,6 +1,7 @@
 package pairs
 
 import (
+	"github.com/PatricioNapoli/bazaar/pkg/config"
 	"github.com/PatricioNapoli/bazaar/pkg/tokens"
 	"github.com/PatricioNapoli/bazaar/pkg/utils"
 	"log"
@@ -28,12 +29,12 @@ type Path struct {
 
 // NewPaths builds a sane struct representation parse from
 // the provided swaps file, this improves later processing.
-func NewPaths(file string, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
-	log.Printf("loading pairs info in %s", file)
+func NewPaths(cfg config.Config, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
+	log.Printf("loading pairs info in %s", cfg.PairsFile)
 
-	f, err := utils.ReadFile(file)
+	f, err := utils.ReadFile(cfg.PairsFile)
 	if err != nil {
-		log.Panicf("failed when reading file %s - %v", file, err)
+		log.Panicf("failed when reading file %s - %v", cfg.PairsFile, err)
 	}
 
 	paths := make([]Path, 0)
@@ -55,12 +56,6 @@ func NewPaths(file string, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
 			tswapC := tswap.([]interface{})
 			ts := TokenSwap{}
 			ts.Token = tokenMap[tswapC[0].(string)]
-
-			// Cannot create a path based on swapping pair with itself in the same market, skip
-			// (OPTIONAL, ITS AVOIDED THROUGH ARBITER)
-			//if len(rootPathC) == 2 && len(tswapC[1].([]interface{})) == 1 {
-			//	continue
-			//}
 
 			for _, swap := range tswapC[1].([]interface{}) {
 

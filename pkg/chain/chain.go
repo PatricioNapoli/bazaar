@@ -12,14 +12,14 @@ type EthClient struct {
 }
 
 // NewEthClient creates an ethereum client from provided endpoint and config for API key
-func NewEthClient(cfg config.Config, endpoint string) EthClient {
-	log.Printf("connecting to ETH mainnet through %s", endpoint)
+func NewEthClient(cfg config.Config) EthClient {
+	log.Printf("connecting to ETH mainnet through %s", cfg.InfuraEndpoint)
 
 	if len(cfg.APIKey) == 0 {
 		log.Panic("infura key not set or empty")
 	}
 
-	client, err := ethclient.Dial(fmt.Sprintf("%s%s", endpoint, cfg.APIKey))
+	client, err := ethclient.Dial(fmt.Sprintf("%s%s", cfg.InfuraEndpoint, cfg.APIKey))
 	if err != nil {
 		log.Panicf("error when dialing eth mainnet: %v", err)
 	}

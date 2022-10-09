@@ -2,6 +2,7 @@ package watchdog
 
 import (
 	"github.com/PatricioNapoli/bazaar/pkg/chain"
+	"github.com/PatricioNapoli/bazaar/pkg/config"
 	"github.com/PatricioNapoli/bazaar/pkg/pairs"
 	"github.com/PatricioNapoli/bazaar/pkg/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,14 +20,14 @@ type Watchdog struct {
 // NewWatchdog creates a token reserves watchdog that
 // maintains rates updated to their latest exchange when started
 // using the provided contract address.
-func NewWatchdog(contractAddr string, client chain.EthClient, swaps []*pairs.Swap) Watchdog {
+func NewWatchdog(cfg config.Config, client chain.EthClient, swaps []*pairs.Swap) Watchdog {
 	addresses := make([]common.Address, len(swaps))
 
 	for i, swp := range swaps {
 		addresses[i] = common.HexToAddress(swp.Address)
 	}
 
-	address := common.HexToAddress(contractAddr)
+	address := common.HexToAddress(cfg.ReservesAddr)
 	contract, err := chain.NewChain(address, client.Client)
 	if err != nil {
 		log.Panicf("failed when binding to contract: %s", err)
