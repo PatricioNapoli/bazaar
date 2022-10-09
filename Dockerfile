@@ -1,6 +1,6 @@
-FROM ethereum/solc:0.8.17-alpine
+FROM ethereum/solc:0.8.17-alpine AS base
 
-COPY --from=golang:alpine /usr/local/go/ /usr/local/go/
+COPY --from=golang:alpine3.16 /usr/local/go/ /usr/local/go/
 ENV PATH /usr/local/go/bin:$PATH
 
 ENV GOPATH /go
@@ -21,4 +21,5 @@ COPY . .
 RUN make sol
 RUN make build
 
-ENTRYPOINT ["/sbin/tini", "-g", "--", "/go/src/bazaar/scripts/run.sh"]
+ENTRYPOINT ["/sbin/tini", "-g", "--"]
+CMD ["/go/src/bazaar/scripts/run.sh"]

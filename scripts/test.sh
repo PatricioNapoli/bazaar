@@ -6,4 +6,4 @@ if [ -f "$ENVFILE" ]; then
 fi
 
 mkdir -p output
-./bin/bazaar
+go test -v cmd/bazaar/main_test.go

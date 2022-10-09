@@ -1,0 +1,8 @@
+version: "3.6"
+
+services:
+  bazaar:
+    build: .
+    environment:
+      - BAZAAR_INFURA_KEY=$INFURA_KEY
+    command: ["scripts/test.sh"]

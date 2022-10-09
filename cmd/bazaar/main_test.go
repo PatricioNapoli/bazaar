@@ -11,8 +11,20 @@ import (
 	"github.com/PatricioNapoli/bazaar/pkg/watchdog"
 	"io/ioutil"
 	"math/big"
+	"os"
+	"path"
+	"runtime"
 	"testing"
 )
+
+func init() {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := path.Join(path.Dir(filename), "../..")
+	err := os.Chdir(dir)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func TestReduceBigInt(t *testing.T) {
 	res := utils.ReduceBigInt(new(big.Int).SetInt64(10000), 4)
