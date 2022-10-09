@@ -23,6 +23,8 @@ jobs:
         run: docker compose -f docker-compose-ci.yml up
 
   build-and-push:
+    name: Build and push
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
