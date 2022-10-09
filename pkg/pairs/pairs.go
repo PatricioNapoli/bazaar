@@ -26,6 +26,8 @@ type Path struct {
 	TokenSwaps []TokenSwap
 }
 
+// NewPaths builds a sane struct representation parse from
+// the provided swaps file, this improves later processing.
 func NewPaths(file string, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
 	log.Printf("loading pairs info in %s", file)
 

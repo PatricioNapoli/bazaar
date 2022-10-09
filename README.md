@@ -67,14 +67,16 @@ This repo can also be built with docker:
 
 ### Running 
 
-Either create the env file through:
+First, either create the env file through:
 
 `make env`  
 
 And then:  
 
-`docker run --env-file .env patricionapoli/bazaar`  
+`docker run --env-file .env -v "$(pwd)"/output:/go/src/bazaar/output patricionapoli/bazaar`  
 
 Or set the infura API key directly:  
 
-`docker run -e BAZAAR_INFURA_KEY=key patricionapoli/bazaar`  
+`docker run -e BAZAAR_INFURA_KEY=key -v "$(pwd)"/output:/go/src/bazaar/output patricionapoli/bazaar`  
+
+Please note that the output folder is being mapped to `/output`

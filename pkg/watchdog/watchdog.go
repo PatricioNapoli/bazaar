@@ -16,14 +16,17 @@ type Watchdog struct {
 	Contract  *chain.Chain
 }
 
-func NewWatchdog(client chain.EthClient, swaps []*pairs.Swap) Watchdog {
+// NewWatchdog creates a token reserves watchdog that
+// maintains rates updated to their latest exchange when started
+// using the provided contract address.
+func NewWatchdog(contractAddr string, client chain.EthClient, swaps []*pairs.Swap) Watchdog {
 	addresses := make([]common.Address, len(swaps))
 
 	for i, swp := range swaps {
 		addresses[i] = common.HexToAddress(swp.Address)
 	}
 
-	address := common.HexToAddress("0x416355755f32b2710ce38725ed0fa102ce7d07e6")
+	address := common.HexToAddress(contractAddr)
 	contract, err := chain.NewChain(address, client.Client)
 	if err != nil {
 		log.Panicf("failed when binding to contract: %s", err)
@@ -37,6 +40,7 @@ func NewWatchdog(client chain.EthClient, swaps []*pairs.Swap) Watchdog {
 	}
 }
 
+// Start starts the watchdog call to the net, using a special contract pre compiled ABI.
 func (wd *Watchdog) Start() {
 	log.Println("refreshing reserves from DEX")
 

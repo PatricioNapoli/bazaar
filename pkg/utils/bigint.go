@@ -5,6 +5,7 @@ import (
 	"math/big"
 )
 
+// ReduceBigInt reduces a big int by decimals amount and returns it in a float64 representation.
 func ReduceBigInt(n *big.Int, decimals int) float64 {
 	mul := math.Pow(10.0, -float64(decimals))
 

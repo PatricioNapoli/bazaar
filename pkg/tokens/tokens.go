@@ -16,6 +16,7 @@ type Tokens struct {
 	tokens map[string]Token
 }
 
+// GetTokens loads a tokens file into an indexed map through token's address.
 func GetTokens(file string) map[string]Token {
 	log.Printf("loading token info in %s", file)
 

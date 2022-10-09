@@ -11,6 +11,7 @@ type EthClient struct {
 	Client *ethclient.Client
 }
 
+// NewEthClient creates an ethereum client from provided endpoint and config for API key
 func NewEthClient(cfg config.Config, endpoint string) EthClient {
 	log.Printf("connecting to ETH mainnet through %s", endpoint)
 

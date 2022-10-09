@@ -30,13 +30,22 @@ type Arbiter struct {
 	Config    config.Config
 }
 
+// NewArbiter creates an arbitration node graph structure, that's capable of easily
+// traversing it and finding potential market arbitration paths.
 func NewArbiter(paths []pairs.Path, cfg config.Config, client chain.EthClient) Arbiter {
+	// These are excluded because they do not belong to Uniswap or Sushiswap,
+	// furthermore, it appears that they have been disabled and reserves have not
+	// been rebalanced, leading to non-valid exchange rates, since they are not
+	// consistent with exchange rates seen in Uniswap and Sushiswap contracts.
+	dollarProtocolAddr0 := "0x6b583cf4aba7bf9d6f8a51b3f1f7c7b2ce59bf15"
+	dollarProtocolAddr1 := "0xd233d1f6fd11640081abb8db125f722b5dc729dc"
+
 	rnodes := make([]SwapNode, len(paths))
 
 	for x, p := range paths {
 		rn := SwapNode{
 			Children: make([]*SwapNode, 0),
-			Swap:     nil, // Starting node is root, has no swap
+			Swap:     nil,
 		}
 
 		skip := false
@@ -44,7 +53,7 @@ func NewArbiter(paths []pairs.Path, cfg config.Config, client chain.EthClient) A
 		for _, tswp := range p.TokenSwaps {
 
 			if cfg.ExcludeDeadTokens {
-				if tswp.Token.Address == "0x6b583cf4aba7bf9d6f8a51b3f1f7c7b2ce59bf15" || tswp.Token.Address == "0xd233d1f6fd11640081abb8db125f722b5dc729dc" {
+				if tswp.Token.Address == dollarProtocolAddr0 || tswp.Token.Address == dollarProtocolAddr1 {
 					skip = true
 					break
 				}
@@ -83,7 +92,10 @@ func NewArbiter(paths []pairs.Path, cfg config.Config, client chain.EthClient) A
 	}
 }
 
+// Start initiates the node grap exploration and writes the output file.
 func (arb *Arbiter) Start() {
+	dexSwapGas := 150000.0
+
 	log.Println("searching possible arbitration paths")
 
 	gp, err := arb.Net.Client.SuggestGasPrice(context.Background())
@@ -92,9 +104,11 @@ func (arb *Arbiter) Start() {
 	}
 
 	gpgwei := utils.ReduceBigInt(gp, 9)
-	totalGas := gpgwei * 160000
+	totalGas := gpgwei * dexSwapGas
 
-	log.Printf("current gas price in gwei: %f", totalGas)
+	if arb.Config.IncludeFees {
+		log.Printf("current gas price in gwei: %f", totalGas)
+	}
 
 	gpeth := totalGas / math.Pow(10, 9)
 
@@ -110,7 +124,7 @@ func (arb *Arbiter) Start() {
 				Path:    make([]*SwapNode, 0),
 			}
 			arbitrations := make([]Arbitration, 0)
-			arb.graphArbitration(&arbitrations, &currArbitration, node)
+			arb.exploreArbitrationGraph(&arbitrations, &currArbitration, node)
 
 			for _, a := range arbitrations {
 				pathLength := float64(len(a.Path))
@@ -133,10 +147,10 @@ func (arb *Arbiter) Start() {
 
 	log.Printf("found %d routes for market making in %dms", len(pathGroups), utils.GetMillis()-millisBefore)
 
-	writePathsToFile(pathGroups)
+	writePathsToFile(pathGroups, arb.Config.OutputFilename)
 }
 
-func (arb *Arbiter) graphArbitration(arbitrations *[]Arbitration, currArb *Arbitration, node *SwapNode) {
+func (arb *Arbiter) exploreArbitrationGraph(arbitrations *[]Arbitration, currArb *Arbitration, node *SwapNode) {
 	if node.Target.Address == node.Swap.Token0.Address {
 		exch := currArb.Balance * node.Swap.Rate1to0
 		if node.Swap.Token0Reserve < exch {
@@ -169,7 +183,7 @@ func (arb *Arbiter) graphArbitration(arbitrations *[]Arbitration, currArb *Arbit
 				Path:    newPath,
 			}
 		}
-		arb.graphArbitration(arbitrations, currArb, n)
+		arb.exploreArbitrationGraph(arbitrations, currArb, n)
 	}
 
 	if len(node.Children) == 0 {
@@ -177,13 +191,15 @@ func (arb *Arbiter) graphArbitration(arbitrations *[]Arbitration, currArb *Arbit
 	}
 }
 
-func writePathsToFile(paths []Arbitration) {
-	file, err := os.Create("output.txt")
+func writePathsToFile(paths []Arbitration, filename string) {
+	file, err := os.Create(filename)
 	if err != nil {
 		log.Panicf("unable to create arbitration log file: %v", err)
 	}
 	defer file.Close()
 
 	bytes, _ := utils.ToPrettyJSON(paths)
+
+	log.Printf("writing arbitration output to %s", filename)
 	fmt.Fprintf(file, "%s", string(bytes))
 }
