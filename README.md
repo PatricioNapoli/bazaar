@@ -27,28 +27,26 @@ Always starts at 1 WETH and attempts to exit with same coin.
 
 ## Prerequisites
 
+If you are not using docker, these are required:  
+
 make  
 go 1.18+  
 solc  
 abigen (geth)  
-Infura API Key
-
-## Dependencies
-
-`go-ethereum`
 
 ## Environment
 
+For getting a prompt for the required INFURA key and other configs, and creating .env file.  
+
 `make env`  
 
-For getting a prompt for the INFURA key and other configs, and creating .env file.  
-Alternatively, you may export manually:
+Alternatively, you may export manually:  
 
-`export BAZAAR_INFURA_KEY=YOURKEY`  
-`export BAZAAR_EXCLUDE_DEAD_TOKENS=1`  
-`export BAZAAR_INCLUDE_FEES=1`
+`export BAZAAR_INFURA_KEY=YOURKEY`
 
-## Build & Run (Make)
+## Build & Run
+
+### Make
 
 `make go`  
 
@@ -59,15 +57,13 @@ Contract ABI for pair reserves is already built but can be recompiled with:
 
 `make sol`
 
-## Docker
+### Docker
 
-### Building
-
-This repo can also be built with docker:  
+#### Building
 
 `docker build -t patricionapoli/bazaar .` 
 
-### Running 
+#### Running 
 
 First, either create the env file through:
 
@@ -82,3 +78,7 @@ Or set the infura API key directly:
 `docker run -e BAZAAR_INFURA_KEY=key -v "$(pwd)"/output:/go/src/bazaar/output patricionapoli/bazaar`  
 
 Please note that the output folder is being mapped to `/output`
+
+#### Running release
+
+`docker run --env-file .env -v "$(pwd)"/output:/go/src/bazaar/output ghcr.io/patricionapoli/bazaar:master`
