@@ -15,6 +15,7 @@ type Watchdog struct {
 	Swaps     []*pairs.Swap
 	Addresses []common.Address
 	Contract  *chain.Chain
+	Config    config.Config
 }
 
 // NewWatchdog creates a token reserves watchdog that
@@ -38,6 +39,7 @@ func NewWatchdog(cfg config.Config, client chain.EthClient, swaps []*pairs.Swap)
 		Swaps:     swaps,
 		Addresses: addresses,
 		Contract:  contract,
+		Config:    cfg,
 	}
 }
 
@@ -59,7 +61,10 @@ func (wd *Watchdog) Start() {
 
 		if wd.Swaps[i].Token0Reserve > 0 && wd.Swaps[i].Token1Reserve > 0 {
 			wd.Swaps[i].Rate0to1 = wd.Swaps[i].Token1Reserve / wd.Swaps[i].Token0Reserve
+			wd.Swaps[i].Rate0to1 = utils.RoundFloat(wd.Swaps[i].Rate0to1, wd.Config.RatePrecision)
+
 			wd.Swaps[i].Rate1to0 = wd.Swaps[i].Token0Reserve / wd.Swaps[i].Token1Reserve
+			wd.Swaps[i].Rate1to0 = utils.RoundFloat(wd.Swaps[i].Rate1to0, wd.Config.RatePrecision)
 		}
 	}
 }

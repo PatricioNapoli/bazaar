@@ -98,7 +98,7 @@ func (arb *Arbiter) Start() {
 
 	gp, err := arb.Net.Client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Panicf("failed when fetching suggested gas: %s", err)
+		log.Panicf("failed when fetching suggested gas: %v", err)
 	}
 
 	gpgwei := utils.ReduceBigInt(gp, 9)
@@ -125,10 +125,10 @@ func (arb *Arbiter) Start() {
 				Balance: balance,
 				Path:    make([]*SwapNode, 0),
 			}
-			arbitrations := make([]Arbitration, 0)
-			arb.exploreArbitrationGraph(&arbitrations, &currArbitration, node)
+			arbs := make([]Arbitration, 0)
+			arb.exploreArbitrationGraph(&arbs, &currArbitration, node)
 
-			for _, a := range arbitrations {
+			for _, a := range arbs {
 				pathLength := float64(len(a.Path))
 
 				if arb.Config.IncludeFees {
@@ -146,21 +146,21 @@ func (arb *Arbiter) Start() {
 
 	log.Printf("found %d routes for market making in %dms", len(pathGroups), utils.GetMillis()-millisBefore)
 
-	writePathsToFile(pathGroups, arb.Config.OutputFilename)
+	writePathsToFile(arb.Config, pathGroups, arb.Config.OutputFilename)
 }
 
-func (arb *Arbiter) exploreArbitrationGraph(arbitrations *[]Arbitration, currArb *Arbitration, node *SwapNode) {
+func (arb *Arbiter) exploreArbitrationGraph(arbs *[]Arbitration, currArb *Arbitration, node *SwapNode) {
 	if node.Target.Address == node.Swap.Token0.Address {
 		exch := currArb.Balance * node.Swap.Rate1to0
 		if node.Swap.Token0Reserve < exch {
-			currArb.Balance = 1.0
+			*arbs = make([]Arbitration, 0)
 			return
 		}
 		currArb.Balance = exch
 	} else {
 		exch := currArb.Balance * node.Swap.Rate0to1
 		if node.Swap.Token1Reserve < exch {
-			currArb.Balance = 1.0
+			*arbs = make([]Arbitration, 0)
 			return
 		}
 		currArb.Balance = exch
@@ -182,22 +182,28 @@ func (arb *Arbiter) exploreArbitrationGraph(arbitrations *[]Arbitration, currArb
 				Path:    newPath,
 			}
 		}
-		arb.exploreArbitrationGraph(arbitrations, currArb, n)
+		arb.exploreArbitrationGraph(arbs, currArb, n)
 	}
 
 	if len(node.Children) == 0 {
-		*arbitrations = append(*arbitrations, *currArb)
+		*arbs = append(*arbs, *currArb)
 	}
 }
 
-func writePathsToFile(paths []Arbitration, filename string) {
+func writePathsToFile(cfg config.Config, paths []Arbitration, filename string) {
 	file, err := os.Create(filename)
 	if err != nil {
 		log.Panicf("unable to create arbitration log file: %v", err)
 	}
 	defer file.Close()
 
-	bytes, _ := utils.ToPrettyJSON(paths)
+	var bytes []byte
+
+	if cfg.PrettyPrintOutput {
+		bytes, _ = utils.ToPrettyJSON(paths)
+	} else {
+		bytes, _ = utils.ToJSON(paths)
+	}
 
 	log.Printf("writing arbitration output to %s", filename)
 	fmt.Fprintf(file, "%s", string(bytes))

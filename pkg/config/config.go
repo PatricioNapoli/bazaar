@@ -14,10 +14,12 @@ type Config struct {
 	TokensFile        string
 	PairsFile         string
 	OutputFilename    string
+	PrettyPrintOutput bool
 	WETHAddr          string
 	ReservesAddr      string
 	DexSwapGas        float64
 	InitialWETH       float64
+	RatePrecision     uint
 }
 
 // NewConfig creates a configuration struct from environment vars.
@@ -28,14 +30,16 @@ func NewConfig() Config {
 		APIKey:            "",
 		InfuraEndpoint:    "https://mainnet.infura.io/v3/",
 		ExcludeDeadTokens: true,
-		IncludeFees:       false,
+		IncludeFees:       true,
 		TokensFile:        "assets/tokens.json",
 		PairsFile:         "assets/uni_sushi_paths.json",
 		OutputFilename:    "output/output.json",
+		PrettyPrintOutput: true,
 		WETHAddr:          "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
 		ReservesAddr:      "0x416355755f32b2710ce38725ed0fa102ce7d07e6",
 		DexSwapGas:        150000.0,
 		InitialWETH:       1.0,
+		RatePrecision:     16,
 	}
 
 	if env := os.Getenv("BAZAAR_INFURA_KEY"); envIsValid(env) {
