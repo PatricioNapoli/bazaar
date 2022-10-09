@@ -2,31 +2,28 @@ package chain
 
 import (
 	"fmt"
-	"log"
-	"os"
-
+	"github.com/PatricioNapoli/bazaar/pkg/config"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"log"
 )
 
 type EthClient struct {
 	Client *ethclient.Client
 }
 
-func NewEthClient(endpoint string) EthClient {
+func NewEthClient(cfg config.Config, endpoint string) EthClient {
 	log.Printf("connecting to ETH mainnet through %s", endpoint)
 
-	key := os.Getenv("INFURA_KEY")
-
-	if len(key) == 0 {
+	if len(cfg.APIKey) == 0 {
 		log.Panic("infura key not set or empty")
 	}
 
-	client, err := ethclient.Dial(fmt.Sprintf("%s%s", endpoint, key))
+	client, err := ethclient.Dial(fmt.Sprintf("%s%s", endpoint, cfg.APIKey))
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("error when dialing eth mainnet: %v", err)
 	}
 
-	log.Println("connected to eth mainnet")
+	log.Println("connected to ETH mainnet")
 
 	return EthClient{Client: client}
 }

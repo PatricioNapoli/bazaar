@@ -1,13 +1,9 @@
 THIS := $(lastword $(MAKEFILE_LIST))
 
-INFURAFILE := .infura
-INFURAKEY :=$(file < $(INFURAFILE))
-
 build:
 	scripts/build.sh
 
 run:
-	export INFURA_KEY=$(INFURAKEY)
 	scripts/run.sh
 
 go:

@@ -28,7 +28,7 @@ Always starts at 1 WETH and attempts to exit with same coin.
 make  
 go 1.18+  
 solc  
-abigen  
+abigen (geth)  
 Infura API Key
 
 ## Dependencies
@@ -39,12 +39,14 @@ Infura API Key
 
 `make env`  
 
-For getting a prompt for the INFURA key.  
+For getting a prompt for the INFURA key and other configs, and creating .env file.  
 Alternatively, you may export manually:
 
-`export INFURA_KEY=YOURKEY`
+`export BAZAAR_INFURA_KEY=YOURKEY`  
+`export BAZAAR_EXCLUDE_DEAD_TOKENS=1`  
+`export BAZAAR_INCLUDE_FEES=1`
 
-## Build & Run
+## Build & Run (Make)
 
 `make go`  
 
@@ -54,3 +56,25 @@ Or run the scripts in `scripts/`.
 Contract ABI for pair reserves is already built but can be recompiled with:  
 
 `make sol`
+
+## Docker
+
+### Building
+
+This repo can also be built with docker:  
+
+`docker build -t patricionapoli/bazaar .` 
+
+### Running 
+
+Either create the env file through:
+
+`make env`  
+
+And then:  
+
+`docker run --env-file .env patricionapoli/bazaar`  
+
+Or set the infura API key directly:  
+
+`docker run -e BAZAAR_INFURA_KEY=key patricionapoli/bazaar`  

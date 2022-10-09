@@ -15,7 +15,6 @@ type Swap struct {
 	Token1Reserve float64
 	Rate0to1      float64
 	Rate1to0      float64
-	HasReserves   bool
 }
 
 type TokenSwap struct {
@@ -50,14 +49,16 @@ func NewPaths(file string, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
 		rootPathC := rootPath.([]interface{})
 
 		for i, tswap := range rootPathC {
+
 			tswapC := tswap.([]interface{})
 			ts := TokenSwap{}
 			ts.Token = tokenMap[tswapC[0].(string)]
 
 			// Cannot create a path based on swapping pair with itself in the same market, skip
-			if len(rootPathC) == 2 && len(tswapC[1].([]interface{})) == 1 {
-				continue
-			}
+			// (OPTIONAL, ITS AVOIDED THROUGH ARBITER)
+			//if len(rootPathC) == 2 && len(tswapC[1].([]interface{})) == 1 {
+			//	continue
+			//}
 
 			for _, swap := range tswapC[1].([]interface{}) {
 
