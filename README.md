@@ -12,6 +12,8 @@
 
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-brightgreen.svg" alt="License MIT"/></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/go-1.18-blue.svg" alt="Go 1.18"/></a>
+  <a href="https://github.com/PatricioNapoli/bazaar/actions/workflows/build.yml"><img src="https://github.com/PatricioNapoli/bazaar/actions/workflows/build.yml/badge.svg" alt="build"/></a>
+
 </div>
 
 
