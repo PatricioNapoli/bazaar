@@ -33,7 +33,7 @@ func TestReduceBigInt(t *testing.T) {
 }
 
 func TestNewConfig(t *testing.T) {
-	cfg := config.NewConfig()
+	cfg := config.New()
 	cfg.APIKey = ""
 
 	expected := string(ReadFile(t, "test/expected/config.json"))
@@ -47,7 +47,7 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestNewEthClient(t *testing.T) {
-	cfg := config.NewConfig()
+	cfg := config.New()
 
 	eth := chain.NewEthClient(cfg)
 
@@ -58,46 +58,46 @@ func TestNewEthClient(t *testing.T) {
 }
 
 func TestGetTokens(t *testing.T) {
-	cfg := config.NewConfig()
+	cfg := config.New()
 	cfg.TokensFile = "test/fixtures/tokens.json"
 
-	tkns := tokens.GetTokens(cfg)
+	tkns := tokens.New(cfg)
 
 	AssertExpectedJSON(t, tkns, "test/expected/tokens.json")
 }
 
 func TestNewPaths(t *testing.T) {
-	cfg := config.NewConfig()
+	cfg := config.New()
 	cfg.TokensFile = "test/fixtures/tokens.json"
 	cfg.PairsFile = "test/fixtures/pairs.json"
 
-	tkns := tokens.GetTokens(cfg)
+	tkns := tokens.New(cfg)
 
-	paths, swaps := pairs.NewPaths(cfg, tkns)
+	paths, swaps := pairs.New(cfg, tkns)
 
 	AssertExpectedJSON(t, paths, "test/expected/paths.json")
 	AssertExpectedJSON(t, swaps, "test/expected/swaps.json")
 }
 
 func TestNewWatchdog(t *testing.T) {
-	cfg := config.NewConfig()
+	cfg := config.New()
 	cfg.TokensFile = "test/fixtures/tokens.json"
 	cfg.PairsFile = "test/fixtures/pairs.json"
 	cfg.RatePrecision = 5
 
-	tkns := tokens.GetTokens(cfg)
-	_, swaps := pairs.NewPaths(cfg, tkns)
+	tkns := tokens.New(cfg)
+	_, swaps := pairs.New(cfg, tkns)
 
 	eth := chain.NewEthClient(cfg)
 
-	wd := watchdog.NewWatchdog(cfg, eth, swaps)
+	wd := watchdog.New(cfg, eth, swaps)
 	wd.Start()
 
 	AssertExpectedJSON(t, swaps, "test/expected/swaps_wd.json")
 }
 
 func TestNewArbiter(t *testing.T) {
-	cfg := config.NewConfig()
+	cfg := config.New()
 	cfg.TokensFile = "test/fixtures/tokens.json"
 	cfg.PairsFile = "test/fixtures/pairs.json"
 	cfg.OutputFilename = "output/output_test.json"
@@ -105,15 +105,15 @@ func TestNewArbiter(t *testing.T) {
 	cfg.RatePrecision = 6
 	cfg.IncludeFees = false
 
-	tkns := tokens.GetTokens(cfg)
-	paths, swaps := pairs.NewPaths(cfg, tkns)
+	tkns := tokens.New(cfg)
+	paths, swaps := pairs.New(cfg, tkns)
 
 	eth := chain.NewEthClient(cfg)
 
-	wd := watchdog.NewWatchdog(cfg, eth, swaps)
+	wd := watchdog.New(cfg, eth, swaps)
 	wd.Start()
 
-	arb := arbiter.NewArbiter(cfg, eth, paths)
+	arb := arbiter.New(cfg, eth, paths)
 	arb.Start()
 
 	out := ReadFile(t, cfg.OutputFilename)

@@ -30,9 +30,9 @@ type Arbiter struct {
 	Config    config.Config
 }
 
-// NewArbiter creates an arbitration node graph structure, that's capable of easily
+// New creates an arbitration node graph structure, that's capable of easily
 // traversing it and finding potential market arbitration paths.
-func NewArbiter(cfg config.Config, client chain.EthClient, paths []pairs.Path) Arbiter {
+func New(cfg config.Config, client chain.EthClient, paths []pairs.Path) Arbiter {
 	// These are excluded because they do not belong to Uniswap or Sushiswap,
 	// furthermore, it appears that they have been disabled and reserves have not
 	// been rebalanced, leading to non-valid exchange rates, since they are not
@@ -117,7 +117,7 @@ func (arb *Arbiter) Start() {
 
 	// Splitting this operation in many go threads yielded bad results
 	// Threads benefit when the CPU computation of the unit surpasses
-	// that of the thread scheduling
+	// that of the thread scheduling load and context switches
 	for _, rn := range arb.RootNodes {
 
 		for _, node := range rn.Children {
@@ -126,7 +126,7 @@ func (arb *Arbiter) Start() {
 				Path:    make([]*SwapNode, 0),
 			}
 			arbs := make([]Arbitration, 0)
-			arb.exploreArbitrationGraph(&arbs, &currArbitration, node)
+			arb.findPaths(&arbs, &currArbitration, node)
 
 			for _, a := range arbs {
 				pathLength := float64(len(a.Path))
@@ -149,7 +149,8 @@ func (arb *Arbiter) Start() {
 	writePathsToFile(arb.Config, pathGroups, arb.Config.OutputFilename)
 }
 
-func (arb *Arbiter) exploreArbitrationGraph(arbs *[]Arbitration, currArb *Arbitration, node *SwapNode) {
+func (arb *Arbiter) findPaths(arbs *[]Arbitration, currArb *Arbitration, node *SwapNode) {
+	// Check what token we are swapping to
 	if node.Target.Address == node.Swap.Token0.Address {
 		exch := currArb.Balance * node.Swap.Rate1to0
 		if node.Swap.Token0Reserve < exch {
@@ -170,11 +171,12 @@ func (arb *Arbiter) exploreArbitrationGraph(arbs *[]Arbitration, currArb *Arbitr
 
 	balanceBefore := currArb.Balance
 	for i, n := range node.Children {
-		// Refuse to hop to itself or to same target
+		// Refuse to hop to itself or to same target token.
 		if n.Swap.Address == node.Swap.Address || n.Target.Address == node.Target.Address {
 			continue
 		}
 
+		// Check for second token swap in same Target, and it's not the final one.
 		if i > 0 && n.Target.Address != arb.Config.WETHAddr {
 			newPath := currArb.Path[:len(currArb.Path)-1]
 			currArb = &Arbitration{
@@ -182,7 +184,7 @@ func (arb *Arbiter) exploreArbitrationGraph(arbs *[]Arbitration, currArb *Arbitr
 				Path:    newPath,
 			}
 		}
-		arb.exploreArbitrationGraph(arbs, currArb, n)
+		arb.findPaths(arbs, currArb, n)
 	}
 
 	if len(node.Children) == 0 {
@@ -195,7 +197,12 @@ func writePathsToFile(cfg config.Config, paths []Arbitration, filename string) {
 	if err != nil {
 		log.Panicf("unable to create arbitration log file: %v", err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Printf("failed when closing file %s", filename)
+		}
+	}(file)
 
 	var bytes []byte
 
@@ -206,5 +213,8 @@ func writePathsToFile(cfg config.Config, paths []Arbitration, filename string) {
 	}
 
 	log.Printf("writing arbitration output to %s", filename)
-	fmt.Fprintf(file, "%s", string(bytes))
+	_, err = fmt.Fprintf(file, "%s", string(bytes))
+	if err != nil {
+		log.Printf("failed when writing file %s", filename)
+	}
 }

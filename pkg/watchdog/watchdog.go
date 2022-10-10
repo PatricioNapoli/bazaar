@@ -18,10 +18,10 @@ type Watchdog struct {
 	Config    config.Config
 }
 
-// NewWatchdog creates a token reserves watchdog that
+// New creates a token reserves watchdog that
 // maintains rates updated to their latest exchange when started
 // using the provided contract address.
-func NewWatchdog(cfg config.Config, client chain.EthClient, swaps []*pairs.Swap) Watchdog {
+func New(cfg config.Config, client chain.EthClient, swaps []*pairs.Swap) Watchdog {
 	addresses := make([]common.Address, len(swaps))
 
 	for i, swp := range swaps {

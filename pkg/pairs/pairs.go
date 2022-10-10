@@ -4,6 +4,7 @@ import (
 	"github.com/PatricioNapoli/bazaar/pkg/config"
 	"github.com/PatricioNapoli/bazaar/pkg/tokens"
 	"github.com/PatricioNapoli/bazaar/pkg/utils"
+
 	"log"
 	"sort"
 )
@@ -27,9 +28,9 @@ type Path struct {
 	TokenSwaps []TokenSwap
 }
 
-// NewPaths builds a sane struct representation parse from
+// New builds a sane struct representation parse from
 // the provided swaps file, this improves later processing.
-func NewPaths(cfg config.Config, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
+func New(cfg config.Config, tokenMap map[string]tokens.Token) ([]Path, []*Swap) {
 	log.Printf("loading pairs info in %s", cfg.PairsFile)
 
 	f, err := utils.ReadFile(cfg.PairsFile)
@@ -54,8 +55,9 @@ func NewPaths(cfg config.Config, tokenMap map[string]tokens.Token) ([]Path, []*S
 		for i, tswap := range rootPathC {
 
 			tswapC := tswap.([]interface{})
-			ts := TokenSwap{}
-			ts.Token = tokenMap[tswapC[0].(string)]
+			ts := TokenSwap{
+				Token: tokenMap[tswapC[0].(string)],
+			}
 
 			for _, swap := range tswapC[1].([]interface{}) {
 
@@ -79,9 +81,7 @@ func NewPaths(cfg config.Config, tokenMap map[string]tokens.Token) ([]Path, []*S
 			rp.TokenSwaps = append(rp.TokenSwaps, ts)
 		}
 
-		if len(rp.TokenSwaps) != 0 {
-			paths = append(paths, rp)
-		}
+		paths = append(paths, rp)
 	}
 
 	return paths, swaps

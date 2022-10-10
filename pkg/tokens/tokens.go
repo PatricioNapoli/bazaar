@@ -17,8 +17,8 @@ type Tokens struct {
 	tokens map[string]Token
 }
 
-// GetTokens loads a tokens file into an indexed map through token's address.
-func GetTokens(cfg config.Config) map[string]Token {
+// New loads a tokens file into an indexed map through token's address.
+func New(cfg config.Config) map[string]Token {
 	log.Printf("loading token info in %s", cfg.TokensFile)
 
 	f, err := utils.ReadFile(cfg.TokensFile)

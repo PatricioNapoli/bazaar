@@ -22,8 +22,8 @@ type Config struct {
 	RatePrecision     uint
 }
 
-// NewConfig creates a configuration struct from environment vars.
-func NewConfig() Config {
+// New creates a configuration struct from environment vars.
+func New() Config {
 	log.Printf("loading config from env vars")
 
 	c := Config{

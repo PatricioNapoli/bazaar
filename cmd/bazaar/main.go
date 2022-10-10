@@ -21,19 +21,19 @@ func main() {
 	console.PrintArt()
 	log.Printf("launching Bazaar on epoch ms %d", utils.GetMillis())
 
-	cfg := config.NewConfig()
+	cfg := config.New()
 
 	client := chain.NewEthClient(cfg)
 
-	tkns := tokens.GetTokens(cfg)
-	paths, swaps := pairs.NewPaths(cfg, tkns)
+	tkns := tokens.New(cfg)
+	paths, swaps := pairs.New(cfg, tkns)
 
 	log.Printf("attempting arbitrage on entry coin: ")
 	wethJson, _ := utils.ToPrettyJSON(tkns[cfg.WETHAddr])
 	fmt.Println(string(wethJson))
 
-	wd := watchdog.NewWatchdog(cfg, client, swaps)
-	arb := arbiter.NewArbiter(cfg, client, paths)
+	wd := watchdog.New(cfg, client, swaps)
+	arb := arbiter.New(cfg, client, paths)
 
 	var wg sync.WaitGroup
 	keep := true
