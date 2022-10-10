@@ -1,10 +1,15 @@
 THIS := $(lastword $(MAKEFILE_LIST))
 
+.PHONY: test
+
 build:
 	scripts/build.sh
 
 run:
 	scripts/run.sh
+
+test:
+	scripts/test.sh
 
 go:
 	@$(MAKE) -f $(THIS) build

@@ -48,6 +48,8 @@ Alternatively, you may export manually:
 
 ### Make
 
+#### Build & Run
+
 `make go`  
 
 Alternatively, you may run `make build` and `make run` separately.  
@@ -55,7 +57,13 @@ Or run the scripts in `scripts/`.
 
 Contract ABI for pair reserves is already built but can be recompiled with:  
 
-`make sol`
+`make sol`  
+
+#### Testing
+
+`make test`  
+
+Please note that tests also require BAZAAR_INFURA_KEY env var set.
 
 ### Docker
 
@@ -81,4 +89,8 @@ Please note that the output folder is being mapped to `/output`
 
 #### Running release
 
-`docker run --env-file .env -v "$(pwd)"/output:/go/src/bazaar/output ghcr.io/patricionapoli/bazaar:master`
+`docker run -e BAZAAR_INFURA_KEY=key -v "$(pwd)"/output:/go/src/bazaar/output ghcr.io/patricionapoli/bazaar:master`
+
+#### Testing
+
+`docker run -e BAZAAR_INFURA_KEY=key -v "$(pwd)"/output:/go/src/bazaar/output ghcr.io/patricionapoli/bazaar:master scripts/test.sh`  
