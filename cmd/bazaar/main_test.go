@@ -93,7 +93,11 @@ func TestNewWatchdog(t *testing.T) {
 	wd := watchdog.New(cfg, eth, swaps)
 	wd.Start()
 
-	AssertExpectedJSON(t, swaps, "test/expected/swaps_wd.json")
+	for _, swp := range swaps {
+		if swp.Token0Reserve == 0 || swp.Token1Reserve == 0 {
+			t.Errorf("error, watchdog updated zero reserves: %f, %f", swp.Token0Reserve, swp.Token1Reserve)
+		}
+	}
 }
 
 func TestNewArbiter(t *testing.T) {
@@ -117,18 +121,25 @@ func TestNewArbiter(t *testing.T) {
 	arb.Start()
 
 	out := ReadFile(t, cfg.OutputFilename)
-	exp := ReadFile(t, "test/expected/arbiter.json")
+	arbs := make([]arbiter.Arbitration, 0)
 
-	AssertString(t, string(out), string(exp))
+	err := utils.FromJSON(out, &arbs)
+	if err != nil {
+		t.Errorf("invalid arbitration json: %v", err)
+	}
+
+	if len(arbs) == 0 {
+		t.Errorf("failed to build arbitrations")
+	}
 }
 
 func ReadFile(t *testing.T, inputFile string) []byte {
-	inputJSON, err := ioutil.ReadFile(inputFile)
+	input, err := ioutil.ReadFile(inputFile)
 	if err != nil {
 		t.Errorf("could not open test file. details: %v", err)
 	}
 
-	return inputJSON
+	return input
 }
 
 func AssertExpectedJSON(t *testing.T, obj interface{}, filename string) {
