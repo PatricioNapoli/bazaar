@@ -29,7 +29,19 @@ func init() {
 func TestReduceBigInt(t *testing.T) {
 	res := utils.ReduceBigInt(new(big.Int).SetInt64(10000), 4)
 
-	AssertFloat(t, res, 1.0)
+	AssertBigInt(t, res, new(big.Int).SetInt64(1))
+}
+
+func TestExtendBigInt(t *testing.T) {
+	res := utils.ExtendBigInt(new(big.Int).SetInt64(1), 4)
+
+	AssertBigInt(t, res, new(big.Int).SetInt64(10000))
+}
+
+func TestExtractFees(t *testing.T) {
+	res := utils.ExtractFees(new(big.Int).SetInt64(100), 0.5, 2)
+
+	AssertBigInt(t, res, new(big.Int).SetInt64(50))
 }
 
 func TestNewConfig(t *testing.T) {
@@ -83,7 +95,6 @@ func TestNewWatchdog(t *testing.T) {
 	cfg := config.New()
 	cfg.TokensFile = "test/fixtures/tokens.json"
 	cfg.PairsFile = "test/fixtures/pairs.json"
-	cfg.RatePrecision = 5
 
 	tkns := tokens.New(cfg)
 	_, swaps := pairs.New(cfg, tkns)
@@ -92,22 +103,15 @@ func TestNewWatchdog(t *testing.T) {
 
 	wd := watchdog.New(cfg, eth, swaps)
 	wd.Start()
-
-	for _, swp := range swaps {
-		if swp.Token0Reserve == 0 || swp.Token1Reserve == 0 {
-			t.Errorf("error, watchdog updated zero reserves: %f, %f", swp.Token0Reserve, swp.Token1Reserve)
-		}
-	}
 }
 
 func TestNewArbiter(t *testing.T) {
 	cfg := config.New()
-	cfg.TokensFile = "test/fixtures/tokens.json"
-	cfg.PairsFile = "test/fixtures/pairs.json"
+	cfg.TokensFile = "test/fixtures/tokens_full.json"
+	cfg.PairsFile = "test/fixtures/pairs_full.json"
 	cfg.OutputFilename = "output/output_test.json"
 	cfg.PrettyPrintOutput = false
-	cfg.RatePrecision = 6
-	cfg.IncludeFees = false
+	cfg.IncludeGas = true
 
 	tkns := tokens.New(cfg)
 	paths, swaps := pairs.New(cfg, tkns)
@@ -159,8 +163,8 @@ func AssertString(t *testing.T, res string, expected string) {
 	}
 }
 
-func AssertFloat(t *testing.T, res float64, expected float64) {
-	if res != expected {
-		t.Errorf("got: %f - expected: %f", res, expected)
+func AssertBigInt(t *testing.T, res *big.Int, expected *big.Int) {
+	if res.Cmp(expected) != 0 {
+		t.Errorf("got: %s - expected: %s", res, expected)
 	}
 }

@@ -4,10 +4,9 @@ import (
 	"github.com/PatricioNapoli/bazaar/pkg/chain"
 	"github.com/PatricioNapoli/bazaar/pkg/config"
 	"github.com/PatricioNapoli/bazaar/pkg/pairs"
-	"github.com/PatricioNapoli/bazaar/pkg/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"log"
-	"strconv"
+	"math/big"
 )
 
 type Watchdog struct {
@@ -53,18 +52,13 @@ func (wd *Watchdog) Start() {
 	}
 
 	for i := 0; i < len(wd.Swaps); i++ {
-		t0dec, _ := strconv.Atoi(wd.Swaps[i].Token0.Decimals)
-		wd.Swaps[i].Token0Reserve = utils.ReduceBigInt(reserves[i*2], t0dec)
+		wd.Swaps[i].Token0Reserve = reserves[i*2]
+		wd.Swaps[i].Token1Reserve = reserves[i*2+1]
 
-		t1dec, _ := strconv.Atoi(wd.Swaps[i].Token1.Decimals)
-		wd.Swaps[i].Token1Reserve = utils.ReduceBigInt(reserves[i*2+1], t1dec)
-
-		if wd.Swaps[i].Token0Reserve > 0 && wd.Swaps[i].Token1Reserve > 0 {
-			wd.Swaps[i].Rate0to1 = wd.Swaps[i].Token1Reserve / wd.Swaps[i].Token0Reserve
-			wd.Swaps[i].Rate0to1 = utils.RoundFloat(wd.Swaps[i].Rate0to1, wd.Config.RatePrecision)
-
-			wd.Swaps[i].Rate1to0 = wd.Swaps[i].Token0Reserve / wd.Swaps[i].Token1Reserve
-			wd.Swaps[i].Rate1to0 = utils.RoundFloat(wd.Swaps[i].Rate1to0, wd.Config.RatePrecision)
+		if wd.Swaps[i].Token0Reserve.Cmp(new(big.Int)) == 0 || wd.Swaps[i].Token1Reserve.Cmp(new(big.Int)) == 0 {
+			wd.Swaps[i].HasReserves = false
 		}
+
+		wd.Swaps[i].K = new(big.Int).Mul(wd.Swaps[i].Token0Reserve, wd.Swaps[i].Token1Reserve)
 	}
 }

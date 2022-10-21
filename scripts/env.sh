@@ -9,10 +9,15 @@ read input
 input=${input:-1}
 echo "BAZAAR_EXCLUDE_DEAD_TOKENS=$input" >> .env
 
-echo "Do you wish to include fees when finding potential arbitrage paths? (default is 1)"
+echo "Do you wish to include fees when finding potential arbitrage paths? (default is 0)"
 read input
-input=${input:-1}
+input=${input:-0}
 echo "BAZAAR_INCLUDE_FEES=$input" >> .env
+
+echo "Do you wish to include gas when finding potential arbitrage paths? (default is 0)"
+read input
+input=${input:-0}
+echo "BAZAAR_INCLUDE_GAS=$input" >> .env
 
 echo "Please enter the output dir+filename: (default is output/output.json)"
 read input

@@ -2,6 +2,7 @@ package arbiter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/PatricioNapoli/bazaar/pkg/chain"
 	"github.com/PatricioNapoli/bazaar/pkg/config"
@@ -9,7 +10,7 @@ import (
 	"github.com/PatricioNapoli/bazaar/pkg/tokens"
 	"github.com/PatricioNapoli/bazaar/pkg/utils"
 	"log"
-	"math"
+	"math/big"
 	"os"
 )
 
@@ -20,7 +21,7 @@ type SwapNode struct {
 }
 
 type Arbitration struct {
-	Balance float64
+	Balance *big.Int
 	Path    []*SwapNode
 }
 
@@ -101,18 +102,16 @@ func (arb *Arbiter) Start() {
 		log.Panicf("failed when fetching suggested gas: %v", err)
 	}
 
-	gpgwei := utils.ReduceBigInt(gp, 9)
-	totalGas := gpgwei * arb.Config.DexSwapGas
+	dexSwapWei := utils.ExtendBigInt(new(big.Int).SetInt64(arb.Config.DexSwapGas), 9)
+	totalGas := new(big.Int).Mul(gp, dexSwapWei)
 
-	if arb.Config.IncludeFees {
-		log.Printf("current gas price in gwei: %f", totalGas)
+	if arb.Config.IncludeGas {
+		log.Printf("current gas price in gwei: %s", gp.String())
 	}
-
-	gpeth := totalGas / math.Pow(10, 9)
 
 	millisBefore := utils.GetMillis()
 
-	balance := arb.Config.InitialWETH
+	balance := utils.ExtendBigInt(new(big.Int).SetInt64(int64(arb.Config.InitialWETH)), 18)
 	pathGroups := make([]Arbitration, 0)
 
 	// Splitting this operation in many go threads yielded bad results
@@ -129,14 +128,14 @@ func (arb *Arbiter) Start() {
 			arb.findPaths(&arbs, &currArbitration, node)
 
 			for _, a := range arbs {
-				pathLength := float64(len(a.Path))
+				pathLength := len(a.Path)
 
-				if arb.Config.IncludeFees {
-					a.Balance -= gpeth * pathLength             // network fees
-					a.Balance -= a.Balance * 0.003 * pathLength // DEX swap fees
+				if arb.Config.IncludeGas {
+					totalWei := new(big.Int).Mul(totalGas, new(big.Int).SetInt64(int64(pathLength)))
+					a.Balance = new(big.Int).Rem(a.Balance, totalWei)
 				}
 
-				if a.Balance > balance {
+				if a.Balance.Cmp(balance) == 1 {
 					pathGroups = append(pathGroups, a)
 				}
 			}
@@ -150,21 +149,32 @@ func (arb *Arbiter) Start() {
 }
 
 func (arb *Arbiter) findPaths(arbs *[]Arbitration, currArb *Arbitration, node *SwapNode) {
+	if !node.Swap.HasReserves {
+		currArb.Balance = new(big.Int)
+		return
+	}
+
+	if arb.Config.IncludeFees {
+		currArb.Balance = utils.ExtractFees(currArb.Balance, arb.Config.DEXFee, 3)
+	}
+
 	// Check what token we are swapping to
 	if node.Target.Address == node.Swap.Token0.Address {
-		exch := currArb.Balance * node.Swap.Rate1to0
-		if node.Swap.Token0Reserve < exch {
-			*arbs = make([]Arbitration, 0)
+		out, err := getOutTokens(node.Swap.Token1Reserve, node.Swap.Token0Reserve, node.Swap.K, currArb.Balance)
+
+		if err != nil {
+			currArb.Balance = out
 			return
 		}
-		currArb.Balance = exch
+		currArb.Balance = out
 	} else {
-		exch := currArb.Balance * node.Swap.Rate0to1
-		if node.Swap.Token1Reserve < exch {
-			*arbs = make([]Arbitration, 0)
+		out, err := getOutTokens(node.Swap.Token0Reserve, node.Swap.Token1Reserve, node.Swap.K, currArb.Balance)
+
+		if err != nil {
+			currArb.Balance = out
 			return
 		}
-		currArb.Balance = exch
+		currArb.Balance = out
 	}
 
 	currArb.Path = append(currArb.Path, node)
@@ -176,8 +186,8 @@ func (arb *Arbiter) findPaths(arbs *[]Arbitration, currArb *Arbitration, node *S
 			continue
 		}
 
-		// Check for second token swap in same Target, and it's not the final one.
-		if i > 0 && n.Target.Address != arb.Config.WETHAddr {
+		// Check for second token swap in same Target, it means it is a different path.
+		if i > 0 {
 			newPath := currArb.Path[:len(currArb.Path)-1]
 			currArb = &Arbitration{
 				Balance: balanceBefore,
@@ -187,9 +197,23 @@ func (arb *Arbiter) findPaths(arbs *[]Arbitration, currArb *Arbitration, node *S
 		arb.findPaths(arbs, currArb, n)
 	}
 
+	// Finish arbitration when no more children found.
 	if len(node.Children) == 0 {
 		*arbs = append(*arbs, *currArb)
 	}
+}
+
+func getOutTokens(from *big.Int, to *big.Int, K *big.Int, balance *big.Int) (*big.Int, error) {
+	newFrom := new(big.Int).Add(from, balance)
+
+	if newFrom.Cmp(K) == 1 {
+		return new(big.Int), errors.New("not enough balance")
+	}
+
+	newTo := new(big.Int).Div(K, newFrom)
+	out := new(big.Int).Rem(to, newTo)
+
+	return out, nil
 }
 
 func writePathsToFile(cfg config.Config, paths []Arbitration, filename string) {

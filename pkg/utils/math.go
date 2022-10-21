@@ -5,18 +5,33 @@ import (
 	"math/big"
 )
 
-// ReduceBigInt reduces a big int by decimals amount and returns it in a float64 representation.
-func ReduceBigInt(n *big.Int, decimals int) float64 {
-	mul := math.Pow(10.0, -float64(decimals))
+// ExtendBigInt extends a big int by decimals amount and returns it
+func ExtendBigInt(n *big.Int, precision int) *big.Int {
+	mul := math.Pow(10.0, float64(precision))
+	mulBig := new(big.Int).SetUint64(uint64(mul))
 
-	flt := new(big.Float).SetPrec(128).SetInt(n)
-	flt = new(big.Float).Mul(flt, new(big.Float).SetFloat64(mul))
+	nBig := new(big.Int).Mul(n, mulBig)
 
-	final, _ := flt.Float64()
-	return final
+	return nBig
 }
 
-func RoundFloat(val float64, precision uint) float64 {
-	ratio := math.Pow(10, float64(precision))
-	return math.Round(val*ratio) / ratio
+// ReduceBigInt reduces a big int by decimals amount and returns it
+func ReduceBigInt(n *big.Int, precision int) *big.Int {
+	mul := math.Pow(10.0, float64(precision))
+	mulBig := new(big.Int).SetUint64(uint64(mul))
+
+	nBig := new(big.Int).Div(n, mulBig)
+
+	return nBig
+}
+
+// ExtractFees fee like (30% -> use 0.3), applies a fee reduction to n
+func ExtractFees(n *big.Int, fee float64, precision int) *big.Int {
+	f := 1 - fee
+	fPrec := math.Pow(10.0, float64(precision))
+	fBig := new(big.Int).SetInt64(int64(f * fPrec))
+
+	out := new(big.Int).Mul(n, fBig)
+	out = ReduceBigInt(out, precision)
+	return out
 }

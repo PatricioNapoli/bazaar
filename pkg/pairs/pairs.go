@@ -4,6 +4,7 @@ import (
 	"github.com/PatricioNapoli/bazaar/pkg/config"
 	"github.com/PatricioNapoli/bazaar/pkg/tokens"
 	"github.com/PatricioNapoli/bazaar/pkg/utils"
+	"math/big"
 
 	"log"
 	"sort"
@@ -13,10 +14,10 @@ type Swap struct {
 	Address       string
 	Token0        tokens.Token
 	Token1        tokens.Token
-	Token0Reserve float64
-	Token1Reserve float64
-	Rate0to1      float64
-	Rate1to0      float64
+	Token0Reserve *big.Int
+	Token1Reserve *big.Int
+	K             *big.Int
+	HasReserves   bool
 }
 
 type TokenSwap struct {
@@ -72,7 +73,7 @@ func New(cfg config.Config, tokenMap map[string]tokens.Token) ([]Path, []*Swap) 
 
 				setTokenOrder(&t0, &t1)
 
-				swp := Swap{Address: swap.(string), Token0: t0, Token1: t1}
+				swp := Swap{Address: swap.(string), Token0: t0, Token1: t1, HasReserves: true}
 
 				swaps = append(swaps, &swp)
 				ts.Swaps = append(ts.Swaps, &swp)
