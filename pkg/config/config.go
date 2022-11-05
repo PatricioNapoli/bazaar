@@ -32,7 +32,7 @@ func New() Config {
 		InfuraEndpoint:    "https://mainnet.infura.io/v3/",
 		ExcludeDeadTokens: true,
 		IncludeGas:        false,
-		IncludeFees:       false,
+		IncludeFees:       true,
 		TokensFile:        "assets/tokens.json",
 		PairsFile:         "assets/uni_sushi_paths.json",
 		OutputFilename:    "output/output.json",

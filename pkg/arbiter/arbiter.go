@@ -111,8 +111,13 @@ func (arb *Arbiter) Start() {
 
 	millisBefore := utils.GetMillis()
 
-	balance := utils.ExtendBigInt(new(big.Int).SetInt64(int64(arb.Config.InitialWETH)), 18)
+	initialBalance := utils.ExtendBigInt(new(big.Int).SetInt64(int64(arb.Config.InitialWETH)), 18)
+	balance := new(big.Int).Set(initialBalance)
 	pathGroups := make([]Arbitration, 0)
+
+	if arb.Config.IncludeFees {
+		balance = utils.ExtractFees(balance, arb.Config.DEXFee, 3)
+	}
 
 	// Splitting this operation in many go threads yielded bad results
 	// Threads benefit when the CPU computation of the unit surpasses
@@ -135,7 +140,7 @@ func (arb *Arbiter) Start() {
 					a.Balance = new(big.Int).Rem(a.Balance, totalWei)
 				}
 
-				if a.Balance.Cmp(balance) == 1 {
+				if a.Balance.Cmp(initialBalance) == 1 {
 					pathGroups = append(pathGroups, a)
 				}
 			}
@@ -152,10 +157,6 @@ func (arb *Arbiter) findPaths(arbs *[]Arbitration, currArb *Arbitration, node *S
 	if !node.Swap.HasReserves {
 		currArb.Balance = new(big.Int)
 		return
-	}
-
-	if arb.Config.IncludeFees {
-		currArb.Balance = utils.ExtractFees(currArb.Balance, arb.Config.DEXFee, 3)
 	}
 
 	// Check what token we are swapping to
